@@ -9,6 +9,7 @@ from db.models import HabitLog, Habit
 from db.session import get_engine
 from gui.daily_habit_editor import DailyHabitEditor
 from gui.habits_manager import HabitsManager
+from gui.statistics_view import StatisticsView
 
 
 class MainScreen:
@@ -28,6 +29,7 @@ class MainScreen:
         self.main_frame.rowconfigure(2, weight=8)
 
         self.habits_frame = ttk.Frame(self.main_frame)
+        self.habits_tree = None
         self.habit_log_list = None
         self.selected_habitLog = None
 
@@ -164,7 +166,7 @@ class MainScreen:
         HabitsManager(self.window, user_id=self.user.user_id)
 
     def show_stats(self):
-        messagebox.showinfo("Statystyki", "Funkcja statystyk (do zaimplementowania)")
+        StatisticsView(self.window, self.user.user_id)
 
     def export_pdf(self):
         messagebox.showinfo("Eksport", "Funkcja eksportu do PDF (do zaimplementowania)")

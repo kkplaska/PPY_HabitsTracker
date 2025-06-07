@@ -7,6 +7,9 @@ from db.models import HabitLog, Habit
 from db.session import get_engine
 from datetime import datetime
 
+from logic import habit_manager
+
+
 class DailyHabitEditor(tk.Toplevel):
     def __init__(self, parent, date, user_id, refresh_callback=None, habitLog_to_edit: HabitLog = None):
         super().__init__(parent)
@@ -16,7 +19,7 @@ class DailyHabitEditor(tk.Toplevel):
         self.dhe_frame = ttk.Frame(self)
         self.refresh_callback = refresh_callback
         self.habitLog_to_edit = habitLog_to_edit
-        self.habits = self.load_habits()
+        self.habits = habit_manager.load_habits_for_user(self.user_id)
         self.date = date
 
         self.dhe_frame = ttk.Frame(self)
@@ -94,12 +97,6 @@ class DailyHabitEditor(tk.Toplevel):
             except ValueError:
                 messagebox.showerror("Błąd", "Nieprawidłowy format daty i godziny. Użyj: YYYY-MM-DD HH:MM")
                 return False
-
-    def load_habits(self):
-        engine = get_engine()
-        with Session(engine) as session:
-            return session.query(Habit).filter(Habit.user_id == self.user_id).all()
-
 
     def fill_fields(self):
         # Set habit selection and details from existing HabitLog
