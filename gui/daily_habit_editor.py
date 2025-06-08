@@ -19,7 +19,7 @@ class DailyHabitEditor(tk.Toplevel):
         self.dhe_frame = ttk.Frame(self)
         self.refresh_callback = refresh_callback
         self.habitLog_to_edit = habitLog_to_edit
-        self.habits = habit_manager.load_habits_for_user(self.user_id)
+        self.habits = habit_manager.get_habits_by_user_id(self.user_id)
         self.date = date
 
         self.dhe_frame = ttk.Frame(self)
@@ -49,7 +49,7 @@ class DailyHabitEditor(tk.Toplevel):
         # --- Data (Entry) ---
         self.date_var = tk.StringVar()
         ttk.Label(self.dhe_frame, text="Data:").grid(row=3, column=0, sticky="e", pady=5)
-        self.date_entry = DateEntry(self.dhe_frame, textvariable=self.date_var, date_pattern='yyyy-mm-dd', width=12)
+        self.date_entry = DateEntry(self.dhe_frame, text=f"{self.date}", textvariable=self.date_var, date_pattern='yyyy-mm-dd', width=12)
         self.date_entry.grid(row=3, column=1, sticky="w", pady=5)
 
         # --- Ukończono (Entry) ---
@@ -103,6 +103,7 @@ class DailyHabitEditor(tk.Toplevel):
         habit = next((h for h in self.habits if h.habit_id == self.habitLog_to_edit.habit_id), None)
         if habit:
             self.habit_var.set(f"{habit.name}: {habit.description}")
+            self.date_var.set(f"{self.habitLog_to_edit.date.date()}")
             self.description_var.set(self.habitLog_to_edit.description if hasattr(self.habitLog_to_edit, "description") else "")
             self.duration_var.set(self.habitLog_to_edit.duration if hasattr(self.habitLog_to_edit, "duration") else "")
             self.completed_at_var.set(str(self.habitLog_to_edit.completed_at) if hasattr(self.habitLog_to_edit, "completed_at") else "")

@@ -4,19 +4,23 @@ import tkinter.ttk as ttk
 from tkinter import messagebox
 from tkcalendar import DateEntry
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
 
 from db.models import HabitLog, Habit
 from db.session import get_engine
 from gui.daily_habit_editor import DailyHabitEditor
 from gui.habits_manager import HabitsManager
 from gui.statistics_view import StatisticsView
+from utils.export_pdf import PDFExporter
 
 
 class MainScreen:
     def __init__(self, user):
         self.user = user
-        self.date = datetime.date.today()
-        self.date_var = None
+        self.from_date = datetime.today().date()
+        self.to_date = (datetime.today() + timedelta(days=30)).date()
+        self.from_date_var = None
+        self.to_date_var = None
         self.log_out = False
         self.window = tk.Tk()
         self.window.title(f"Habit Tracker - {self.user.username}")
@@ -34,23 +38,32 @@ class MainScreen:
         self.selected_habitLog = None
 
         self.create_widgets()
+        self.set_date_and_refresh()
         self.window.mainloop()
 
     def create_widgets(self):
         # Góra
         top_frame = ttk.Frame(self.main_frame)
-        top_frame.grid(column=0, row=0, sticky=tk.NSEW)
+        top_frame.grid(column=0, row=0, sticky=tk.NSEW, columnspan=2)
         # topFrame.grid(row=0, column=0, padx=10, pady=10, sticky=tk.NW)
         ttk.Label(top_frame, text=f"Witaj, {self.user.username}!", font=("Arial", 16)).pack(side=tk.LEFT)
 
         # Wybór daty - prawy górny róg
-        date_frame = ttk.Frame(self.main_frame)
-        date_frame.grid(column=1, row=0, sticky=tk.E)
-        ttk.Label(date_frame, text="Wskaż datę: ", font=("Arial", 12)).grid(row=0, column=0, padx=5, pady=5, sticky=tk.E)
-        self.date_var = tk.StringVar()
-        DateEntry(date_frame, text=f"{self.date}", date_pattern="dd.mm.yyyy", textvariable=self.date_var).grid(row=1, column=0, padx=5, pady=5, sticky=tk.E)
-        # Przycisk do odświeżania listy czynności po zmianie daty
-        ttk.Button(date_frame, text="Odśwież", command=self.set_date_and_refresh).grid(row=2, column=0, padx=5, pady=5, sticky=tk.E)
+        date_frame = ttk.Frame(top_frame)
+        date_frame.pack(side=tk.RIGHT, pady=5)
+        ttk.Label(date_frame, text="Wskaż datę: ", font=("Arial", 12)).grid(row=0, column=0, padx=5, pady=5, sticky=tk.E, columnspan=2)
+        self.from_date_var = tk.StringVar()
+        self.to_date_var = tk.StringVar()
+        ttk.Label(date_frame, text="Od:").grid(row=1, column=0, padx=5)
+        from_date_entry = DateEntry(date_frame, text=f"{self.from_date}", date_pattern="dd.mm.yyyy", textvariable=self.from_date_var)
+        from_date_entry.set_date(self.from_date)
+        from_date_entry.grid(row=1, column=1, padx=5, pady=5, sticky=tk.E)
+        ttk.Label(date_frame, text="Do:").grid(row=1, column=2, padx=5)
+        to_date_entry = DateEntry(date_frame, text=f"{self.to_date}", date_pattern="dd.mm.yyyy", textvariable=self.to_date_var)
+        to_date_entry.set_date(self.to_date)
+        to_date_entry.grid(row=1, column=3, padx=5, pady=5, sticky=tk.E)
+        # Przycisk do odświeżania listy czynności po zmianie dat
+        ttk.Button(date_frame, text="Odśwież", command=self.set_date_and_refresh).grid(row=0, column=3, padx=5, pady=5, sticky=tk.NSEW, columnspan=2)
 
 
         # Lista czynności - środek
@@ -84,9 +97,10 @@ class MainScreen:
 
         # Utwórz nowy Treeview
         self.habits_tree = ttk.Treeview(self.habits_frame,
-                                        columns=("name", "description", "details", "duration", "completed_at", "is_completed"),
+                                        columns=("name", "date", "description", "details", "duration", "completed_at", "is_completed"),
                                         show="headings")
         self.habits_tree.heading("name", text="Nazwa")
+        self.habits_tree.heading("date", text="Data")
         self.habits_tree.heading("description", text="Opis")
         self.habits_tree.heading("details", text="Szczegóły")
         self.habits_tree.heading("duration", text="Czas trwania [min]")
@@ -104,19 +118,29 @@ class MainScreen:
             if habitLog:
                 self.selected_habitLog = habitLog
 
+    def refresh_dates(self):
+        self.from_date = datetime.strptime(self.from_date_var.get(), "%d.%m.%Y")
+        self.to_date = datetime.strptime(self.to_date_var.get(), "%d.%m.%Y")
+
     def set_date_and_refresh(self):
-        self.date = datetime.datetime.strptime(self.date_var.get(), "%d.%m.%Y")
+        self.refresh_dates()
         self.refresh_habits()
 
 
     def refresh_habits(self):
+        self.refresh_dates()
         self.clean_and_create_treeview()
 
         # Pobierz czynności użytkownika z bazy
         engine = get_engine()
-        date_for_query = datetime.datetime.fromisoformat(self.date.isoformat())
-        with Session(engine) as session:
-            self.habit_log_list = session.query(Habit, HabitLog).join(HabitLog).filter(Habit.user_id == self.user.user_id).filter(HabitLog.date == date_for_query).all()
+        from_date_for_query = datetime.fromisoformat(self.from_date.isoformat())
+        to_date_for_query = datetime.fromisoformat(self.to_date.isoformat())
+        with (Session(engine) as session):
+            self.habit_log_list = (session.query(Habit, HabitLog).join(HabitLog
+                  ).filter(Habit.user_id == self.user.user_id
+                  ).filter(HabitLog.date >= from_date_for_query
+                  ).filter(HabitLog.date <= to_date_for_query
+                  ).all())
 
         if not self.habit_log_list:
             ttk.Label(self.habits_frame, text="Brak czynności. Dodaj pierwszą czynność!").pack()
@@ -124,20 +148,26 @@ class MainScreen:
             for habit, habitLog in self.habit_log_list:
                 if habitLog.completed_at is None:
                     self.habits_tree.insert("", tk.END, iid=habitLog.habitLog_id, values=(
-                        habit.name, habit.description, habitLog.description, habitLog.duration, None, "❌"
+                        habit.name, habitLog.date, habit.description, habitLog.description, habitLog.duration, None, "❌"
                     ))
                 else:
                     self.habits_tree.insert("", tk.END, iid=habitLog.habitLog_id, values=(
-                        habit.name, habit.description, habitLog.description, habitLog.duration, habitLog.completed_at, "✔️"
+                        habit.name, habitLog.date, habit.description, habitLog.description, habitLog.duration, habitLog.completed_at, "✔️"
                     ))
 
     def add_habit_for_day(self):
-        DailyHabitEditor(self.window, self.date, self.user.user_id, refresh_callback=self.refresh_habits)
+        DailyHabitEditor(self.window, self.from_date, self.user.user_id, refresh_callback=self.refresh_habits)
 
     def edit_habit_for_day(self):
-        DailyHabitEditor(self.window, self.date, self.user.user_id, refresh_callback=self.refresh_habits, habitLog_to_edit=self.selected_habitLog)
+        if not self.habits_tree.selection():
+            messagebox.showerror("Edytor czynności", "Brak wybranej czynności do edycji")
+            return
+        DailyHabitEditor(self.window, self.selected_habitLog.date, self.user.user_id, refresh_callback=self.refresh_habits, habitLog_to_edit=self.selected_habitLog)
 
     def delete_habit_for_day(self):
+        if not self.habits_tree.selection():
+            messagebox.showerror("Usuwanie", "Brak wybranej czynności!")
+            return
         habitLog = self.selected_habitLog
         engine = get_engine()
         with Session(engine) as session:
@@ -147,14 +177,20 @@ class MainScreen:
         self.refresh_habits()
 
     def mark_habit_as_done(self):
+        if not self.habits_tree.selection():
+            messagebox.showerror("Wykonano", "Brak wybranej czynności!")
+            return
         habitLog = self.selected_habitLog
         engine = get_engine()
         with Session(engine) as session:
-            session.query(HabitLog).filter(HabitLog.habitLog_id == habitLog.habitLog_id).update({HabitLog.completed_at: datetime.datetime.now().replace(microsecond=0)})
+            session.query(HabitLog).filter(HabitLog.habitLog_id == habitLog.habitLog_id).update({HabitLog.completed_at: datetime.now().replace(microsecond=0)})
             session.commit()
         self.refresh_habits()
 
     def mark_habit_as_undone(self):
+        if not self.habits_tree.selection():
+            messagebox.showerror("Nie wykonano", "Brak wybranej czynności!")
+            return
         habitLog = self.selected_habitLog
         engine = get_engine()
         with Session(engine) as session:
@@ -166,10 +202,16 @@ class MainScreen:
         HabitsManager(self.window, user_id=self.user.user_id)
 
     def show_stats(self):
-        StatisticsView(self.window, self.user.user_id)
+        StatisticsView(self.window, self.user.user_id, self.from_date, self.to_date)
 
     def export_pdf(self):
-        messagebox.showinfo("Eksport", "Funkcja eksportu do PDF (do zaimplementowania)")
+        try:
+            exporter = PDFExporter(self.user)
+            stats_path = exporter.export_stats_to_pdf()
+            logs_path = exporter.export_habits_logs_to_pdf()
+            messagebox.showinfo("Eksport PDF", f"Pliki PDF zostały zapisane w:\n1.{stats_path}\n2.{logs_path}")
+        except Exception:
+            messagebox.showerror("Eksport PDF", "Wystąpił błąd podczas eksportu danych do pliku pdf")
 
     def logout(self):
         self.log_out = True

@@ -1,2 +1,4 @@
 sqlalchemy
 tkcalendar
+matplotlib
+fpdf
