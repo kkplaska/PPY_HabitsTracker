@@ -146,21 +146,78 @@ class MainScreen:
         for widget in self.habits_frame.winfo_children():
             widget.destroy()
 
+        # Utwórz nowy Treeview z możliwością sortowania po kliknięciu w nagłówek
         self.habits_tree = ttk.Treeview(
             self.habits_frame,
             columns=("name", "date", "description", "details", "duration", "completed_at", "is_completed"),
             show="headings"
         )
-        self.habits_tree.heading("name", text="Nazwa")
-        self.habits_tree.heading("date", text="Data")
-        self.habits_tree.heading("description", text="Opis")
-        self.habits_tree.heading("details", text="Szczegóły")
-        self.habits_tree.heading("duration", text="Czas trwania [min]")
-        self.habits_tree.heading("completed_at", text="Ukończono")
-        self.habits_tree.heading("is_completed", text="Wykonano")
+
+        # definiujemy kolumny i przypisujemy każdemu nagłówkowi command
+        columns = [
+            ("name", "Nazwa"),
+            ("date", "Data"),
+            ("description", "Opis"),
+            ("details", "Szczegóły"),
+            ("duration", "Czas trwania [min]"),
+            ("completed_at", "Ukończono"),
+            ("is_completed", "Wykonano"),
+        ]
+        for col, title in columns:
+            # reverse=False oznacza sortowanie rosnące przy pierwszym kliknięciu
+            self.habits_tree.heading(
+                col,
+                text=title,
+                command=lambda _col=col: self.sort_treeview(_col, False)
+            )
+
         self.habits_tree.pack(fill=tk.BOTH, expand=True)
         self.habits_frame.grid(column=0, row=1, rowspan=2, sticky=tk.NSEW)
         self.habits_tree.bind("<<TreeviewSelect>>", self.on_row_selected)
+
+    def sort_treeview(self, col: str, reverse: bool) -> None:
+        """
+        Sortuje widok po kolumnie `col`.
+        :param col: klucz kolumny (np. "date", "name" itd.)
+        :param reverse: False – sortuj rosnąco, True – malejąco
+        """
+        # pobierz wszystkie itemy i ich wartości w kolumnie col
+        data = []
+        for iid in self.habits_tree.get_children(""):
+            cell = self.habits_tree.set(iid, col)
+            # dobieramy odpowiedni klucz sortowania
+            if col == "duration":
+                key = float(cell) if cell else 0.0
+            elif col in ("date", "completed_at"):
+                try:
+                    # spodziewamy się formatu "dd.mm.YYYY" lub "dd.mm.YYYY HH:MM"
+                    key = datetime.strptime(cell, "%d.%m.%Y %H:%M")
+                except ValueError:
+                    try:
+                        key = datetime.strptime(cell, "%d.%m.%Y")
+                    except Exception:
+                        key = datetime.min
+            elif col == "is_completed":
+                # ✔️ > ❌
+                key = 1 if cell == "✔️" else 0
+            else:
+                key = cell.lower()  # dla tekstów – ignorujemy wielkość liter
+
+            data.append((iid, key))
+
+        # sortujemy
+        data.sort(key=lambda x: x[1], reverse=reverse)
+
+        # przestawiamy wiersze w widoku
+        for index, (iid, _) in enumerate(data):
+            self.habits_tree.move(iid, "", index)
+
+        # po kliknięciu zmieniamy flagę reverse dla kolejnego sortowania
+        # podmieniamy handler nagłówka
+        self.habits_tree.heading(
+            col,
+            command=lambda _col=col: self.sort_treeview(_col, not reverse)
+        )
 
     def on_row_selected(self, event) -> None:
         """

@@ -80,7 +80,7 @@ class DailyHabitEditor(tk.Toplevel):
         )
 
         # Czas trwania
-        ttk.Label(frame, text="Czas trwania (h):").grid(
+        ttk.Label(frame, text="Czas trwania (min):").grid(
             row=2, column=0, sticky="e", pady=5
         )
         self.duration_var = tk.StringVar()
@@ -199,7 +199,7 @@ class DailyHabitEditor(tk.Toplevel):
                 if self.habit_log_to_edit:
                     # Update
                     session.query(HabitLog).filter(
-                        HabitLog.habitLog_id == self.habit_log_to_edit.habitLog_id
+                        HabitLog.habit_log_id == self.habit_log_to_edit.habit_log_id
                     ).update(
                         {
                             HabitLog.habit_id: habit.habit_id,
