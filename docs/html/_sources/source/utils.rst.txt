@@ -1,0 +1,31 @@
+utils namespace
+===============
+
+.. py:module:: utils
+
+Submodules
+----------
+
+utils.encryption module
+-----------------------
+
+.. automodule:: utils.encryption
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+utils.export\_pdf module
+------------------------
+
+.. automodule:: utils.export_pdf
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+utils.statistics module
+-----------------------
+
+.. automodule:: utils.statistics
+   :members:
+   :show-inheritance:
+   :undoc-members:

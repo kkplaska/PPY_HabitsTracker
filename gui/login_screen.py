@@ -86,8 +86,9 @@ class LoginScreen:
         """
         Próbuje zalogować użytkownika na podstawie podanych danych.
         Wyświetla komunikat o sukcesie lub błędzie.
-        :param username: Nazwa użytkownika
-        :param password: Hasło użytkownika
+
+            :param username: Nazwa użytkownika
+            :param password: Hasło użytkownika
         """
         engine = get_engine()
         with Session(engine) as session:

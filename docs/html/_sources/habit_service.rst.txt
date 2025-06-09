@@ -1,0 +1,7 @@
+habit\_service module
+=====================
+
+.. automodule:: habit_service
+   :members:
+   :show-inheritance:
+   :undoc-members:

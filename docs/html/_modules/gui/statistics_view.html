@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+
+<html lang="pl" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>gui.statistics_view &#8212; PPY_HabitsTracker 1 - dokumentacja</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=e81cd88c"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/translations.js?v=2827c288"></script>
+    <link rel="index" title="Indeks" href="../../genindex.html" />
+    <link rel="search" title="Szukaj" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Kod źródłowy modułu gui.statistics_view</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">gui/statistics_view.py</span>
+
+<span class="sd">Zawiera klasę StatisticsView, która odpowiada za:</span>
+<span class="sd">- wybór zakresu dat do analizy,</span>
+<span class="sd">- wyświetlanie statystyk globalnych (wszystkie nawyki),</span>
+<span class="sd">- wyświetlanie statystyk wybranego nawyku,</span>
+<span class="sd">- generowanie i wyświetlanie wykresu słupkowego wykonanych/niewykonanych wpisów.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="kn">import</span> <span class="n">messagebox</span><span class="p">,</span> <span class="n">ttk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.backends.backend_tkagg</span><span class="w"> </span><span class="kn">import</span> <span class="n">FigureCanvasTkAgg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tkcalendar</span><span class="w"> </span><span class="kn">import</span> <span class="n">DateEntry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Session</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Habit</span><span class="p">,</span> <span class="n">HabitLog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">db.session</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_engine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.statistics</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_max_streak</span>
+
+
+<div class="viewcode-block" id="StatisticsView">
+<a class="viewcode-back" href="../../source/gui.html#gui.statistics_view.StatisticsView">[dokumentacja]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StatisticsView</span><span class="p">(</span><span class="n">tk</span><span class="o">.</span><span class="n">Toplevel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Okno dialogowe do wyświetlania statystyk nawyków użytkownika.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parent</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">Widget</span><span class="p">,</span>
+        <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">from_date</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">to_date</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicjalizuje widok statystyk.</span>
+
+<span class="sd">        :param parent: rodzicielski widget (root lub inne Toplevel)</span>
+<span class="sd">        :param user_id: identyfikator zalogowanego użytkownika</span>
+<span class="sd">        :param from_date: data początkowa zakresu (domyślnie 30 dni temu)</span>
+<span class="sd">        :param to_date: data końcowa zakresu (domyślnie dzisiaj)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Statystyki nawyków&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="s2">&quot;700x1000&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">user_id</span>
+
+        <span class="c1"># Domyślny zakres: ostatnie 30 dni</span>
+        <span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_date</span> <span class="o">=</span> <span class="n">from_date</span> <span class="ow">or</span> <span class="p">(</span><span class="n">today</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_date</span> <span class="o">=</span> <span class="n">to_date</span> <span class="ow">or</span> <span class="n">today</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_widgets</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_habits_and_refresh</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_widgets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Tworzy i układa wszystkie widgety w oknie.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Nagłówek wyboru dat</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Okres statystyk&quot;</span><span class="p">,</span>
+            <span class="n">font</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Arial&quot;</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">pady</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+        <span class="n">dates_frame</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">dates_frame</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">pady</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">dates_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Od:&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_date_entry</span> <span class="o">=</span> <span class="n">DateEntry</span><span class="p">(</span>
+            <span class="n">dates_frame</span><span class="p">,</span>
+            <span class="n">date_pattern</span><span class="o">=</span><span class="s2">&quot;dd.mm.yyyy&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_date_entry</span><span class="o">.</span><span class="n">set_date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_date</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_date_entry</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">dates_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Do:&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_date_entry</span> <span class="o">=</span> <span class="n">DateEntry</span><span class="p">(</span>
+            <span class="n">dates_frame</span><span class="p">,</span>
+            <span class="n">date_pattern</span><span class="o">=</span><span class="s2">&quot;dd.mm.yyyy&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_date_entry</span><span class="o">.</span><span class="n">set_date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_date</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_date_entry</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span>
+            <span class="n">dates_frame</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Odśwież&quot;</span><span class="p">,</span>
+            <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_stats</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+        <span class="c1"># Separator</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Separator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+        <span class="c1"># Statystyki globalne</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Statystyki globalne (wszystkie nawyki)&quot;</span><span class="p">,</span>
+            <span class="n">font</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Arial&quot;</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">pady</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_stats_label</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="n">justify</span><span class="o">=</span><span class="s2">&quot;left&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_stats_label</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span>
+            <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">X</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Ramka na wykres</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chart_frame</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chart_frame</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span>
+            <span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">BOTH</span><span class="p">,</span>
+            <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">pady</span><span class="o">=</span><span class="mi">10</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Separator</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Separator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+        <span class="c1"># Statystyki pojedynczego nawyku</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Statystyki wybranego nawyku&quot;</span><span class="p">,</span>
+            <span class="n">font</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Arial&quot;</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">&quot;bold&quot;</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">pady</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+        <span class="n">habit_frame</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">habit_frame</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">pady</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">habit_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Wybierz nawyk:&quot;</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">habit_var</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habit_combo</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Combobox</span><span class="p">(</span>
+            <span class="n">habit_frame</span><span class="p">,</span>
+            <span class="n">textvariable</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">habit_var</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="s2">&quot;readonly&quot;</span><span class="p">,</span>
+            <span class="n">width</span><span class="o">=</span><span class="mi">30</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habit_combo</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habit_combo</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span>
+            <span class="s2">&quot;&lt;&lt;ComboboxSelected&gt;&gt;&quot;</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">refresh_habit_stats</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">habit_stats_label</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="n">justify</span><span class="o">=</span><span class="s2">&quot;left&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habit_stats_label</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span>
+            <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">X</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_habits_and_refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ładuje listę nawyków i od razu odświeża wszystkie widoki.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_habits</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_stats</span><span class="p">()</span>
+
+<div class="viewcode-block" id="StatisticsView.load_habits">
+<a class="viewcode-back" href="../../source/gui.html#gui.statistics_view.StatisticsView.load_habits">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_habits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pobiera z bazy wszystkie nawyki zalogowanego użytkownika</span>
+<span class="sd">        i uzupełnia combobox.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="n">habits</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Habit</span><span class="p">)</span>\
+                            <span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>\
+                            <span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+        <span class="c1"># Słownik: etykieta -&gt; obiekt Habit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habits</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Habit</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">h</span>
+            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">habits</span>
+        <span class="p">}</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">habits</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habit_combo</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span>
+        <span class="k">if</span> <span class="n">values</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">habit_combo</span><span class="o">.</span><span class="n">current</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StatisticsView.refresh_stats">
+<a class="viewcode-back" href="../../source/gui.html#gui.statistics_view.StatisticsView.refresh_stats">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refresh_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Odświeża statystyki globalne, statystyki wybranego nawyku</span>
+<span class="sd">        oraz generuje wykres słupkowy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">date_from</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_date_entry</span><span class="o">.</span><span class="n">get_date</span><span class="p">()</span>
+        <span class="n">date_to</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_date_entry</span><span class="o">.</span><span class="n">get_date</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">date_from</span> <span class="o">&gt;</span> <span class="n">date_to</span><span class="p">:</span>
+            <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span>
+                <span class="s2">&quot;Błąd&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Data początkowa nie może być po dacie końcowej.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">show_global_stats</span><span class="p">(</span><span class="n">date_from</span><span class="p">,</span> <span class="n">date_to</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_habit_stats</span><span class="p">(</span><span class="n">date_from</span><span class="p">,</span> <span class="n">date_to</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">show_chart</span><span class="p">(</span><span class="n">date_from</span><span class="p">,</span> <span class="n">date_to</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StatisticsView.show_global_stats">
+<a class="viewcode-back" href="../../source/gui.html#gui.statistics_view.StatisticsView.show_global_stats">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">show_global_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_from</span><span class="p">:</span> <span class="n">date</span><span class="p">,</span> <span class="n">date_to</span><span class="p">:</span> <span class="n">date</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Oblicza i wyświetla:</span>
+<span class="sd">         - liczba wszystkich wpisów,</span>
+<span class="sd">         - liczba wykonanych i niewykonanych,</span>
+<span class="sd">         - najdłuższa seria w danym okresie.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="n">logs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">HabitLog</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">HabitLog</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Habit</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">Habit</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span>
+                    <span class="n">HabitLog</span><span class="o">.</span><span class="n">date</span> <span class="o">&gt;=</span> <span class="n">date_from</span><span class="p">,</span>
+                    <span class="n">HabitLog</span><span class="o">.</span><span class="n">date</span> <span class="o">&lt;=</span> <span class="n">date_to</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">logs</span><span class="p">)</span>
+        <span class="n">completed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">logs</span> <span class="k">if</span> <span class="n">log</span><span class="o">.</span><span class="n">completed_at</span><span class="p">)</span>
+        <span class="n">uncompleted</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">completed</span>
+        <span class="n">streak</span> <span class="o">=</span> <span class="n">calculate_max_streak</span><span class="p">(</span><span class="n">logs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_stats_label</span><span class="o">.</span><span class="n">config</span><span class="p">(</span>
+            <span class="n">text</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Liczba wpisów: </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Wykonano: </span><span class="si">{</span><span class="n">completed</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Nie wykonano: </span><span class="si">{</span><span class="n">uncompleted</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Najdłuższa seria (dowolny nawyk): </span><span class="si">{</span><span class="n">streak</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StatisticsView.refresh_habit_stats">
+<a class="viewcode-back" href="../../source/gui.html#gui.statistics_view.StatisticsView.refresh_habit_stats">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refresh_habit_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_from</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">date_to</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Oblicza i wyświetla statystyki wybranego nawyku:</span>
+<span class="sd">         - liczba wpisów,</span>
+<span class="sd">         - liczba wykonanych/niewykonanych,</span>
+<span class="sd">         - najdłuższa seria.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">date_from</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">date_to</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">date_from</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_date_entry</span><span class="o">.</span><span class="n">get_date</span><span class="p">()</span>
+            <span class="n">date_to</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_date_entry</span><span class="o">.</span><span class="n">get_date</span><span class="p">()</span>
+
+        <span class="n">habit_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">habit_var</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="n">habit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">habit_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">habit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">habit_stats_label</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s2">&quot;Brak danych.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">date_from</span> <span class="o">&gt;</span> <span class="n">date_to</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">habit_stats_label</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s2">&quot;Błąd zakresu dat.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="n">logs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">HabitLog</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">HabitLog</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">HabitLog</span><span class="o">.</span><span class="n">habit_id</span> <span class="o">==</span> <span class="n">habit</span><span class="o">.</span><span class="n">habit_id</span><span class="p">,</span>
+                    <span class="n">HabitLog</span><span class="o">.</span><span class="n">date</span> <span class="o">&gt;=</span> <span class="n">date_from</span><span class="p">,</span>
+                    <span class="n">HabitLog</span><span class="o">.</span><span class="n">date</span> <span class="o">&lt;=</span> <span class="n">date_to</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">logs</span><span class="p">)</span>
+        <span class="n">completed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">logs</span> <span class="k">if</span> <span class="n">log</span><span class="o">.</span><span class="n">completed_at</span><span class="p">)</span>
+        <span class="n">uncompleted</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">completed</span>
+        <span class="n">streak</span> <span class="o">=</span> <span class="n">calculate_max_streak</span><span class="p">(</span><span class="n">logs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">habit_stats_label</span><span class="o">.</span><span class="n">config</span><span class="p">(</span>
+            <span class="n">text</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Liczba wpisów: </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Wykonano: </span><span class="si">{</span><span class="n">completed</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Nie wykonano: </span><span class="si">{</span><span class="n">uncompleted</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Najdłuższa seria: </span><span class="si">{</span><span class="n">streak</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StatisticsView.show_chart">
+<a class="viewcode-back" href="../../source/gui.html#gui.statistics_view.StatisticsView.show_chart">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">show_chart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_from</span><span class="p">:</span> <span class="n">date</span><span class="p">,</span> <span class="n">date_to</span><span class="p">:</span> <span class="n">date</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generuje wykres słupkowy dla każdego nawyku</span>
+<span class="sd">        – liczba dni wykonanych i niewykonanych.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">completed_counts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">uncompleted_counts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">habits</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+                <span class="n">habit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">logs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">HabitLog</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">HabitLog</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">HabitLog</span><span class="o">.</span><span class="n">habit_id</span> <span class="o">==</span> <span class="n">habit</span><span class="o">.</span><span class="n">habit_id</span><span class="p">,</span>
+                        <span class="n">HabitLog</span><span class="o">.</span><span class="n">date</span> <span class="o">&gt;=</span> <span class="n">date_from</span><span class="p">,</span>
+                        <span class="n">HabitLog</span><span class="o">.</span><span class="n">date</span> <span class="o">&lt;=</span> <span class="n">date_to</span>
+                    <span class="p">)</span>
+                    <span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                <span class="p">)</span>
+                <span class="n">completed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">logs</span> <span class="k">if</span> <span class="n">log</span><span class="o">.</span><span class="n">completed_at</span><span class="p">)</span>
+                <span class="n">uncompleted</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">logs</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">log</span><span class="o">.</span><span class="n">completed_at</span><span class="p">)</span>
+                <span class="n">completed_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">completed</span><span class="p">)</span>
+                <span class="n">uncompleted_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uncompleted</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plot_bar_chart</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">completed_counts</span><span class="p">,</span> <span class="n">uncompleted_counts</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_plot_bar_chart</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">habit_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">completed</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">uncompleted</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Rysuje i umieszcza w oknie wykres słupkowy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Wyczyść poprzedni wykres</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">chart_frame</span><span class="o">.</span><span class="n">winfo_children</span><span class="p">():</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">habit_names</span><span class="p">))</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="mf">0.35</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">],</span>
+            <span class="n">completed</span><span class="p">,</span>
+            <span class="n">width</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Wykonano&#39;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">],</span>
+            <span class="n">uncompleted</span><span class="p">,</span>
+            <span class="n">width</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Nie wykonano&#39;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">habit_names</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Liczba dni&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Statystyki nawyków&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+        <span class="n">canvas</span> <span class="o">=</span> <span class="n">FigureCanvasTkAgg</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">master</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">chart_frame</span><span class="p">)</span>
+        <span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+        <span class="n">canvas</span><span class="o">.</span><span class="n">get_tk_widget</span><span class="p">()</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span>
+            <span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">BOTH</span><span class="p">,</span>
+            <span class="n">expand</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">PPY_HabitsTracker</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Szukaj" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Nawigacja</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../source/main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/db.html">db namespace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/gui.html">gui namespace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/logic.html">logic namespace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/utils.html">utils namespace</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Kod modułu</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Konrad Plaska.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

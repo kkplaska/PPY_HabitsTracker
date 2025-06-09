@@ -2,9 +2,10 @@
 db/models.py
 
 Moduł zawiera definicje modeli ORM dla aplikacji Habit Tracker:
-- User      – użytkownicy,
-- Habit     – nawyki przypisane do użytkowników,
-- HabitLog  – dzienne wpisy realizacji nawyków,
+    - User – użytkownicy,
+    - Habit – nawyki przypisane do użytkowników,
+    - HabitLog – dzienne wpisy realizacji nawyków
+
 oraz funkcję inicjalizującą bazę danych SQLite na podstawie tych modeli.
 """
 
@@ -20,9 +21,9 @@ class User(Base):
     Model reprezentujący użytkownika aplikacji.
 
     Atrybuty:
-        user_id       – unikalne ID użytkownika (klucz główny),
-        username      – nazwa użytkownika (unikalna, niepusta),
-        password_hash – skrót hasła użytkownika.
+        - user_id       – unikalne ID użytkownika (klucz główny),
+        - username      – nazwa użytkownika (unikalna, niepusta),
+        - password_hash – skrót hasła użytkownika.
     """
     __tablename__ = 'users'
 
@@ -36,11 +37,11 @@ class Habit(Base):
     Model reprezentujący nawyk przypisany do użytkownika.
 
     Atrybuty:
-        habit_id    – unikalne ID nawyku (klucz główny),
-        user_id     – ID właściciela nawyku (klucz obcy do users.user_id),
-        name        – nazwa nawyku (niepusta),
-        description – opis nawyku (opcjonalny),
-        created_at  – data utworzenia nawyku.
+        - habit_id    – unikalne ID nawyku (klucz główny),
+        - user_id     – ID właściciela nawyku (klucz obcy do users.user_id),
+        - name        – nazwa nawyku (niepusta),
+        - description – opis nawyku (opcjonalny),
+        - created_at  – data utworzenia nawyku.
     """
     __tablename__ = 'habits'
 
@@ -60,12 +61,12 @@ class HabitLog(Base):
     Model reprezentujący dzienny wpis logu realizacji nawyku.
 
     Atrybuty:
-        habit_log_id – unikalne ID wpisu (klucz główny),
-        habit_id     – ID nawyku (klucz obcy do habits.habit_id),
-        description  – dodatkowy opis realizacji (opcjonalny),
-        duration     – czas trwania aktywności w minutach (opcjonalny),
-        date         – data wykonania wpisu,
-        completed_at – znacznik czasu ukończenia (None jeśli nieukończone).
+        - habit_log_id – unikalne ID wpisu (klucz główny),
+        - habit_id     – ID nawyku (klucz obcy do habits.habit_id),
+        - description  – dodatkowy opis realizacji (opcjonalny),
+        - duration     – czas trwania aktywności w minutach (opcjonalny),
+        - date         – data wykonania wpisu,
+        - completed_at – znacznik czasu ukończenia (None jeśli nieukończone).
     """
     __tablename__ = 'habit_logs'
 

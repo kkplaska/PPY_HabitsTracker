@@ -1,0 +1,7 @@
+PPY_HabitsTracker
+=================
+
+.. toctree::
+   :maxdepth: 4
+
+   main

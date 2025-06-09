@@ -1,0 +1,23 @@
+db namespace
+============
+
+.. py:module:: db
+
+Submodules
+----------
+
+db.models module
+----------------
+
+.. automodule:: db.models
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+db.session module
+-----------------
+
+.. automodule:: db.session
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+
+<html lang="pl" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>gui namespace &#8212; PPY_HabitsTracker 1 - dokumentacja</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=e81cd88c"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/translations.js?v=2827c288"></script>
+    <link rel="index" title="Indeks" href="../genindex.html" />
+    <link rel="search" title="Szukaj" href="../search.html" />
+    <link rel="next" title="logic namespace" href="logic.html" />
+    <link rel="prev" title="db namespace" href="db.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-gui">
+<span id="gui-namespace"></span><h1>gui namespace<a class="headerlink" href="#module-gui" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-gui.daily_habit_editor">
+<span id="gui-daily-habit-editor-module"></span><h2>gui.daily_habit_editor module<a class="headerlink" href="#module-gui.daily_habit_editor" title="Link to this heading">¶</a></h2>
+<p>gui/daily_habit_editor.py</p>
+<p>Moduł ekranu edycji nawyku dla danego dnia w aplikacji Habit Tracker.
+Zawiera klasę DailyHabitEditor odpowiedzialną za edycję wpisu.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gui.daily_habit_editor.DailyHabitEditor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gui.daily_habit_editor.</span></span><span class="sig-name descname"><span class="pre">DailyHabitEditor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent:</span> <span class="pre">~tkinter.Widget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date:</span> <span class="pre">~.datetime.date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id:</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh_callback:</span> <span class="pre">~typing.Callable[[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">None]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">habit_log_to_edit:</span> <span class="pre">~db.models.HabitLog</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gui/daily_habit_editor.html#DailyHabitEditor"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.daily_habit_editor.DailyHabitEditor" title="Link to this definition">¶</a></dt>
+<dd><p>Klasy bazowe: <code class="xref py py-class docutils literal notranslate"><span class="pre">Toplevel</span></code></p>
+<p>Okno do dodawania lub edycji dziennego wpisu nawyku (HabitLog).
+Konstruktor: Inicjalizuje GUI, pobiera listę nawyków i ewentualnie wypełnia pola
+jeśli edytujemy istniejący wpis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametry<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parent</strong> – rodzicielski widget (zwykle główne okno)</p></li>
+<li><p><strong>date</strong> – data wpisu (datetime)</p></li>
+<li><p><strong>user_id</strong> – ID zalogowanego użytkownika</p></li>
+<li><p><strong>refresh_callback</strong> – funkcja odświeżająca listę w MainScreen</p></li>
+<li><p><strong>habit_log_to_edit</strong> – obiekt HabitLog do edycji (opcjonalnie)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.daily_habit_editor.DailyHabitEditor.fill_fields">
+<span class="sig-name descname"><span class="pre">fill_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/daily_habit_editor.html#DailyHabitEditor.fill_fields"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.daily_habit_editor.DailyHabitEditor.fill_fields" title="Link to this definition">¶</a></dt>
+<dd><p>Wypełnia pola danymi z istniejącego HabitLog (edycja).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.daily_habit_editor.DailyHabitEditor.save_habit_log">
+<span class="sig-name descname"><span class="pre">save_habit_log</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/daily_habit_editor.html#DailyHabitEditor.save_habit_log"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.daily_habit_editor.DailyHabitEditor.save_habit_log" title="Link to this definition">¶</a></dt>
+<dd><p>Zapisuje nowy lub aktualizuje istniejący wpis HabitLog w bazie.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-gui.habit_editor">
+<span id="gui-habit-editor-module"></span><h2>gui.habit_editor module<a class="headerlink" href="#module-gui.habit_editor" title="Link to this heading">¶</a></h2>
+<p>gui/habit_editor.py</p>
+<p>Moduł ekranu edycji nawyku w aplikacji Habit Tracker.
+Zawiera klasę HabitEditor odpowiedzialną za edycję nawyku.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gui.habit_editor.HabitEditor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gui.habit_editor.</span></span><span class="sig-name descname"><span class="pre">HabitEditor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">habit_to_edit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="db.html#db.models.Habit" title="db.models.Habit"><span class="pre">Habit</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gui/habit_editor.html#HabitEditor"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habit_editor.HabitEditor" title="Link to this definition">¶</a></dt>
+<dd><p>Klasy bazowe: <code class="xref py py-class docutils literal notranslate"><span class="pre">Toplevel</span></code></p>
+<p>Okno dialogowe do dodawania lub edycji nawyku użytkownika.
+Pozwala wprowadzić nazwę i opis nawyku oraz zapisać zmiany do bazy danych.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.habit_editor.HabitEditor.fill_fields">
+<span class="sig-name descname"><span class="pre">fill_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/habit_editor.html#HabitEditor.fill_fields"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habit_editor.HabitEditor.fill_fields" title="Link to this definition">¶</a></dt>
+<dd><p>Wypełnia pola edytora danymi istniejącego nawyku (tryb edycji).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.habit_editor.HabitEditor.save_habit">
+<span class="sig-name descname"><span class="pre">save_habit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/habit_editor.html#HabitEditor.save_habit"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habit_editor.HabitEditor.save_habit" title="Link to this definition">¶</a></dt>
+<dd><p>Zapisuje nowy nawyk lub aktualizuje istniejący w bazie danych.
+Waliduje dane wejściowe i obsługuje wyjątki.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-gui.habits_manager">
+<span id="gui-habits-manager-module"></span><h2>gui.habits_manager module<a class="headerlink" href="#module-gui.habits_manager" title="Link to this heading">¶</a></h2>
+<p>gui/habits_manager.py</p>
+<p>Moduł ekranu zarządzania nawykami w aplikacji Habit Tracker.
+Zawiera klasę HabitsManager odpowiedzialną za obsługę nawyków.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gui.habits_manager.HabitsManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gui.habits_manager.</span></span><span class="sig-name descname"><span class="pre">HabitsManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gui/habits_manager.html#HabitsManager"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habits_manager.HabitsManager" title="Link to this definition">¶</a></dt>
+<dd><p>Klasy bazowe: <code class="xref py py-class docutils literal notranslate"><span class="pre">Toplevel</span></code></p>
+<p>Okno menadżera nawyków.
+Pozwala na przeglądanie, dodawanie, edycję i usuwanie nawyków użytkownika.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.habits_manager.HabitsManager.add_habit">
+<span class="sig-name descname"><span class="pre">add_habit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/habits_manager.html#HabitsManager.add_habit"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habits_manager.HabitsManager.add_habit" title="Link to this definition">¶</a></dt>
+<dd><p>Otwiera okno dodawania nowego nawyku.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.habits_manager.HabitsManager.delete_habit">
+<span class="sig-name descname"><span class="pre">delete_habit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/habits_manager.html#HabitsManager.delete_habit"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habits_manager.HabitsManager.delete_habit" title="Link to this definition">¶</a></dt>
+<dd><p>Usuwa wybrany nawyk oraz powiązane wpisy HabitLog z bazy danych.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.habits_manager.HabitsManager.edit_selected_habit">
+<span class="sig-name descname"><span class="pre">edit_selected_habit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/habits_manager.html#HabitsManager.edit_selected_habit"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habits_manager.HabitsManager.edit_selected_habit" title="Link to this definition">¶</a></dt>
+<dd><p>Otwiera okno edycji wybranego nawyku.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.habits_manager.HabitsManager.load_habits">
+<span class="sig-name descname"><span class="pre">load_habits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="db.html#db.models.Habit" title="db.models.Habit"><span class="pre">Habit</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/habits_manager.html#HabitsManager.load_habits"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habits_manager.HabitsManager.load_habits" title="Link to this definition">¶</a></dt>
+<dd><p>Pobiera listę nawyków użytkownika z bazy danych.
+:return: Lista obiektów Habit lub None, jeśli brak nawyków</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.habits_manager.HabitsManager.load_table">
+<span class="sig-name descname"><span class="pre">load_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/habits_manager.html#HabitsManager.load_table"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habits_manager.HabitsManager.load_table" title="Link to this definition">¶</a></dt>
+<dd><p>Ładuje dane do tabeli (Treeview) na podstawie nawyków użytkownika.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.habits_manager.HabitsManager.on_row_selected">
+<span class="sig-name descname"><span class="pre">on_row_selected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/habits_manager.html#HabitsManager.on_row_selected"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.habits_manager.HabitsManager.on_row_selected" title="Link to this definition">¶</a></dt>
+<dd><p>Obsługuje zaznaczenie wiersza w tabeli.
+Ustawia wybrany nawyk jako aktywny.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-gui.login_screen">
+<span id="gui-login-screen-module"></span><h2>gui.login_screen module<a class="headerlink" href="#module-gui.login_screen" title="Link to this heading">¶</a></h2>
+<p>gui/login_screen.py</p>
+<p>Moduł ekranu logowania do aplikacji Habit Tracker.
+Zawiera klasę LoginScreen odpowiedzialną za obsługę logowania i przejście do rejestracji.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gui.login_screen.LoginScreen">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gui.login_screen.</span></span><span class="sig-name descname"><span class="pre">LoginScreen</span></span><a class="reference internal" href="../_modules/gui/login_screen.html#LoginScreen"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.login_screen.LoginScreen" title="Link to this definition">¶</a></dt>
+<dd><p>Klasy bazowe: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Klasa wyświetlająca ekran logowania użytkownika.
+Pozwala na podanie loginu i hasła oraz przejście do rejestracji.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.login_screen.LoginScreen.attempt_login">
+<span class="sig-name descname"><span class="pre">attempt_login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/login_screen.html#LoginScreen.attempt_login"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.login_screen.LoginScreen.attempt_login" title="Link to this definition">¶</a></dt>
+<dd><p>Próbuje zalogować użytkownika na podstawie podanych danych.
+Wyświetla komunikat o sukcesie lub błędzie.</p>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">param username<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nazwa użytkownika</p>
+</dd>
+<dt class="field-even">param password<span class="colon">:</span></dt>
+<dd class="field-even"><p>Hasło użytkownika</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-gui.main_screen">
+<span id="gui-main-screen-module"></span><h2>gui.main_screen module<a class="headerlink" href="#module-gui.main_screen" title="Link to this heading">¶</a></h2>
+<p>gui/main_screen.py</p>
+<p>Główny ekran aplikacji Habit Tracker – przeglądanie, dodawanie,
+edycja, usuwanie i oznaczanie dziennych wpisów nawyków oraz
+eksport statystyk i logów do PDF.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gui.main_screen.</span></span><span class="sig-name descname"><span class="pre">MainScreen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen" title="Link to this definition">¶</a></dt>
+<dd><p>Klasy bazowe: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Główny ekran aplikacji Habit Tracker.</p>
+<dl class="simple">
+<dt>Pozwala użytkownikowi na:</dt><dd><ul class="simple">
+<li><p>Przeglądanie historii logów nawyków w zadanym okresie</p></li>
+<li><p>Dodawanie, edycję i usuwanie dziennych wpisów</p></li>
+<li><p>Oznaczanie wpisów jako wykonane/niewykonane</p></li>
+<li><p>Zarządzanie listą nawyków (inny moduł)</p></li>
+<li><p>Przegląd statystyk</p></li>
+<li><p>Eksport wyników do PDF</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.add_habit_for_day">
+<span class="sig-name descname"><span class="pre">add_habit_for_day</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.add_habit_for_day"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.add_habit_for_day" title="Link to this definition">¶</a></dt>
+<dd><p>Otwiera dialog DailyHabitEditor do dodania nowego logu na dzień self.from_date.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.delete_habit_for_day">
+<span class="sig-name descname"><span class="pre">delete_habit_for_day</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.delete_habit_for_day"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.delete_habit_for_day" title="Link to this definition">¶</a></dt>
+<dd><p>Usuwa wybraną czynność i odświeża listę.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.edit_habit_for_day">
+<span class="sig-name descname"><span class="pre">edit_habit_for_day</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.edit_habit_for_day"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.edit_habit_for_day" title="Link to this definition">¶</a></dt>
+<dd><p>Otwiera dialog edycji dla self.selected_habit_log.
+Jeśli nic nie zaznaczono – pokazuje ostrzeżenie.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.export_pdf">
+<span class="sig-name descname"><span class="pre">export_pdf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.export_pdf"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.export_pdf" title="Link to this definition">¶</a></dt>
+<dd><p>Eksportuje statystyki i logi do dwóch plików PDF.
+Wyświetla informację o ścieżkach lub błąd.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.logout">
+<span class="sig-name descname"><span class="pre">logout</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.logout"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.logout" title="Link to this definition">¶</a></dt>
+<dd><p>Kończy sesję i zamyka główne okno (powrót do logowania).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.manage_habits">
+<span class="sig-name descname"><span class="pre">manage_habits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.manage_habits"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.manage_habits" title="Link to this definition">¶</a></dt>
+<dd><p>Otwiera osobne okno Menadżera nawyków (lista i edycja samych nawyków).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.mark_habit_as_done">
+<span class="sig-name descname"><span class="pre">mark_habit_as_done</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.mark_habit_as_done"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.mark_habit_as_done" title="Link to this definition">¶</a></dt>
+<dd><p>Oznacza czynność jako wykonaną i odświeża listę.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.mark_habit_as_undone">
+<span class="sig-name descname"><span class="pre">mark_habit_as_undone</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.mark_habit_as_undone"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.mark_habit_as_undone" title="Link to this definition">¶</a></dt>
+<dd><p>Oznacza czynność jako niewykonaną i odświeża listę.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.on_row_selected">
+<span class="sig-name descname"><span class="pre">on_row_selected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.on_row_selected"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.on_row_selected" title="Link to this definition">¶</a></dt>
+<dd><p>Ustawia self.selected_habit_log na aktualnie wybrany wpis w Treeview.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.refresh_habits">
+<span class="sig-name descname"><span class="pre">refresh_habits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.refresh_habits"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.refresh_habits" title="Link to this definition">¶</a></dt>
+<dd><p>Pobiera z bazy logi dla bieżącego użytkownika
+w przedziale self.from_date – self.to_date i wyświetla je.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.show_stats">
+<span class="sig-name descname"><span class="pre">show_stats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.show_stats"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.show_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Otwiera StatisticsView z wykresem/statystykami dla zadanych dat.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.main_screen.MainScreen.sort_treeview">
+<span class="sig-name descname"><span class="pre">sort_treeview</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/main_screen.html#MainScreen.sort_treeview"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.main_screen.MainScreen.sort_treeview" title="Link to this definition">¶</a></dt>
+<dd><p>Sortuje widok po kolumnie <cite>col</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametry<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>col</strong> – klucz kolumny (np. „date”, „name” itd.)</p></li>
+<li><p><strong>reverse</strong> – False – sortuj rosnąco, True – malejąco</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-gui.register_screen">
+<span id="gui-register-screen-module"></span><h2>gui.register_screen module<a class="headerlink" href="#module-gui.register_screen" title="Link to this heading">¶</a></h2>
+<p>gui/register_screen.py</p>
+<p>Zawiera ekran rejestracji użytkownika (GUI + logika walidacji danych i zapis do bazy).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gui.register_screen.RegisterScreen">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gui.register_screen.</span></span><span class="sig-name descname"><span class="pre">RegisterScreen</span></span><a class="reference internal" href="../_modules/gui/register_screen.html#RegisterScreen"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.register_screen.RegisterScreen" title="Link to this definition">¶</a></dt>
+<dd><p>Klasy bazowe: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Klasa odpowiedzialna za wyświetlenie i obsługę ekranu rejestracji użytkownika.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gui.register_screen.attempt_register">
+<span class="sig-prename descclassname"><span class="pre">gui.register_screen.</span></span><span class="sig-name descname"><span class="pre">attempt_register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">re_password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tk</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/register_screen.html#attempt_register"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.register_screen.attempt_register" title="Link to this definition">¶</a></dt>
+<dd><p>Waliduje dane rejestracyjne i próbuje zarejestrować nowego użytkownika w bazie.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametry<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>username</strong> – wprowadzona nazwa użytkownika</p></li>
+<li><p><strong>password</strong> – wprowadzone hasło</p></li>
+<li><p><strong>re_password</strong> – powtórzone hasło</p></li>
+<li><p><strong>window</strong> – okno rejestracji, które zostanie zamknięte po udanej rejestracji</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-gui.statistics_view">
+<span id="gui-statistics-view-module"></span><h2>gui.statistics_view module<a class="headerlink" href="#module-gui.statistics_view" title="Link to this heading">¶</a></h2>
+<p>gui/statistics_view.py</p>
+<p>Zawiera klasę StatisticsView, która odpowiada za:
+- wybór zakresu dat do analizy,
+- wyświetlanie statystyk globalnych (wszystkie nawyki),
+- wyświetlanie statystyk wybranego nawyku,
+- generowanie i wyświetlanie wykresu słupkowego wykonanych/niewykonanych wpisów.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="gui.statistics_view.StatisticsView">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gui.statistics_view.</span></span><span class="sig-name descname"><span class="pre">StatisticsView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Widget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">date</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">date</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gui/statistics_view.html#StatisticsView"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.statistics_view.StatisticsView" title="Link to this definition">¶</a></dt>
+<dd><p>Klasy bazowe: <code class="xref py py-class docutils literal notranslate"><span class="pre">Toplevel</span></code></p>
+<p>Okno dialogowe do wyświetlania statystyk nawyków użytkownika.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.statistics_view.StatisticsView.load_habits">
+<span class="sig-name descname"><span class="pre">load_habits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/statistics_view.html#StatisticsView.load_habits"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.statistics_view.StatisticsView.load_habits" title="Link to this definition">¶</a></dt>
+<dd><p>Pobiera z bazy wszystkie nawyki zalogowanego użytkownika
+i uzupełnia combobox.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.statistics_view.StatisticsView.refresh_habit_stats">
+<span class="sig-name descname"><span class="pre">refresh_habit_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">date</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">date</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/statistics_view.html#StatisticsView.refresh_habit_stats"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.statistics_view.StatisticsView.refresh_habit_stats" title="Link to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Oblicza i wyświetla statystyki wybranego nawyku:</dt><dd><ul class="simple">
+<li><p>liczba wpisów,</p></li>
+<li><p>liczba wykonanych/niewykonanych,</p></li>
+<li><p>najdłuższa seria.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.statistics_view.StatisticsView.refresh_stats">
+<span class="sig-name descname"><span class="pre">refresh_stats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/statistics_view.html#StatisticsView.refresh_stats"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.statistics_view.StatisticsView.refresh_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Odświeża statystyki globalne, statystyki wybranego nawyku
+oraz generuje wykres słupkowy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.statistics_view.StatisticsView.show_chart">
+<span class="sig-name descname"><span class="pre">show_chart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">date</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/statistics_view.html#StatisticsView.show_chart"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.statistics_view.StatisticsView.show_chart" title="Link to this definition">¶</a></dt>
+<dd><p>Generuje wykres słupkowy dla każdego nawyku
+– liczba dni wykonanych i niewykonanych.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gui.statistics_view.StatisticsView.show_global_stats">
+<span class="sig-name descname"><span class="pre">show_global_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">date</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/gui/statistics_view.html#StatisticsView.show_global_stats"><span class="viewcode-link"><span class="pre">[źródło]</span></span></a><a class="headerlink" href="#gui.statistics_view.StatisticsView.show_global_stats" title="Link to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Oblicza i wyświetla:</dt><dd><ul class="simple">
+<li><p>liczba wszystkich wpisów,</p></li>
+<li><p>liczba wykonanych i niewykonanych,</p></li>
+<li><p>najdłuższa seria w danym okresie.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">PPY_HabitsTracker</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Szukaj" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Nawigacja</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">db namespace</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">gui namespace</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gui.daily_habit_editor">gui.daily_habit_editor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gui.habit_editor">gui.habit_editor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gui.habits_manager">gui.habits_manager module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gui.login_screen">gui.login_screen module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gui.main_screen">gui.main_screen module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gui.register_screen">gui.register_screen module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gui.statistics_view">gui.statistics_view module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="logic.html">logic namespace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils namespace</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="db.html" title="poprzedni rozdział">db namespace</a></li>
+      <li>Next: <a href="logic.html" title="następny rozdział">logic namespace</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Konrad Plaska.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/source/gui.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -4,17 +4,12 @@ utils/statistics.py
 Moduł statystyk nawyków.
 
 Zawiera:
-- calculate_max_streak: funkcję obliczającą najdłuższą serię dni, w których nawyk był wykonany,
-- load_habits: metodę do załadowania nawyków użytkownika do widżetu Combobox.
+    - calculate_max_streak: funkcję obliczającą najdłuższą serię dni, w których nawyk był wykonany,
+    - load_habits: metodę do załadowania nawyków użytkownika do widżetu Combobox.
 """
 
-from typing import Sequence, Dict
-
-from sqlalchemy.orm import Session
-
-from db.session import get_engine
-from db.models import Habit, HabitLog
-from logic.habit_service import get_habits_by_user_id
+from typing import Sequence
+from db.models import HabitLog
 
 
 def calculate_max_streak(logs: Sequence[HabitLog]) -> int:

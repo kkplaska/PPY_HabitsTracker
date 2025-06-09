@@ -1,0 +1,7 @@
+habit\_editor module
+====================
+
+.. automodule:: habit_editor
+   :members:
+   :show-inheritance:
+   :undoc-members:

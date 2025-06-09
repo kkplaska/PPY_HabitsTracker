@@ -1,0 +1,7 @@
+statistics\_view module
+=======================
+
+.. automodule:: statistics_view
+   :members:
+   :show-inheritance:
+   :undoc-members:

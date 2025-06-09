@@ -2,3 +2,4 @@ sqlalchemy
 tkcalendar
 matplotlib
 fpdf
+bcrypt

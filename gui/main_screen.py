@@ -26,19 +26,19 @@ class MainScreen:
     Główny ekran aplikacji Habit Tracker.
 
     Pozwala użytkownikowi na:
-    - Przeglądanie historii logów nawyków w zadanym okresie
-    - Dodawanie, edycję i usuwanie dziennych wpisów
-    - Oznaczanie wpisów jako wykonane/niewykonane
-    - Zarządzanie listą nawyków (inny moduł)
-    - Przegląd statystyk
-    - Eksport wyników do PDF
+        - Przeglądanie historii logów nawyków w zadanym okresie
+        - Dodawanie, edycję i usuwanie dziennych wpisów
+        - Oznaczanie wpisów jako wykonane/niewykonane
+        - Zarządzanie listą nawyków (inny moduł)
+        - Przegląd statystyk
+        - Eksport wyników do PDF
     """
 
     def __init__(self, user):
         """
         Inicjalizuje i pokazuje główne okno aplikacji.
 
-        :param user: Obiekt zalogowanego użytkownika
+            :param user: Obiekt zalogowanego użytkownika
         """
         self.habit_log_list: list = []
         self.selected_habitLog: Optional[HabitLog] = None
@@ -178,6 +178,7 @@ class MainScreen:
     def sort_treeview(self, col: str, reverse: bool) -> None:
         """
         Sortuje widok po kolumnie `col`.
+
         :param col: klucz kolumny (np. "date", "name" itd.)
         :param reverse: False – sortuj rosnąco, True – malejąco
         """

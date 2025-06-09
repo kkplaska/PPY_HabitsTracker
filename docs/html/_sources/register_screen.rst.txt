@@ -1,0 +1,7 @@
+register\_screen module
+=======================
+
+.. automodule:: register_screen
+   :members:
+   :show-inheritance:
+   :undoc-members:

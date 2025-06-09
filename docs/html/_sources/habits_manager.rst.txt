@@ -1,0 +1,7 @@
+habits\_manager module
+======================
+
+.. automodule:: habits_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:

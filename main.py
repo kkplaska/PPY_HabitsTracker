@@ -16,10 +16,10 @@ from gui.main_screen import MainScreen
 def main() -> None:
     """
     Główna funkcja uruchamiająca aplikację.
-    - Tworzy i inicjalizuje bazę danych.
-    - Wyświetla ekran logowania.
-    - Po poprawnym logowaniu otwiera główny ekran aplikacji.
-    - Powtarza proces do momentu wylogowania się użytkownika.
+        - Tworzy i inicjalizuje bazę danych.
+        - Wyświetla ekran logowania.
+        - Po poprawnym logowaniu otwiera główny ekran aplikacji.
+        - Powtarza proces do momentu wylogowania się użytkownika.
     """
     # Inicjalizacja bazy danych
     engine = get_engine()

@@ -1,0 +1,63 @@
+gui namespace
+=============
+
+.. py:module:: gui
+
+Submodules
+----------
+
+gui.daily\_habit\_editor module
+-------------------------------
+
+.. automodule:: gui.daily_habit_editor
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+gui.habit\_editor module
+------------------------
+
+.. automodule:: gui.habit_editor
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+gui.habits\_manager module
+--------------------------
+
+.. automodule:: gui.habits_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+gui.login\_screen module
+------------------------
+
+.. automodule:: gui.login_screen
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+gui.main\_screen module
+-----------------------
+
+.. automodule:: gui.main_screen
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+gui.register\_screen module
+---------------------------
+
+.. automodule:: gui.register_screen
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+gui.statistics\_view module
+---------------------------
+
+.. automodule:: gui.statistics_view
+   :members:
+   :show-inheritance:
+   :undoc-members:

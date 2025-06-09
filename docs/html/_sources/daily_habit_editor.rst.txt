@@ -1,0 +1,7 @@
+daily\_habit\_editor module
+===========================
+
+.. automodule:: daily_habit_editor
+   :members:
+   :show-inheritance:
+   :undoc-members:

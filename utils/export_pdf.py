@@ -41,7 +41,7 @@ class PDFExporter:
         """
         Eksportuje statystyki nawyków użytkownika do pliku PDF.
 
-        Zwraca bezwzględną ścieżkę do wygenerowanego pliku.
+        :return: Zwraca bezwzględną ścieżkę do wygenerowanego pliku.
         """
         # Przygotowanie ścieżki i pobranie danych
         exports_dir = "exports"
@@ -157,7 +157,7 @@ class PDFExporter:
         """
         Eksportuje dziennik wszystkich nawyków użytkownika do pliku PDF.
 
-        Zwraca bezwzględną ścieżkę do wygenerowanego pliku.
+        :return: Zwraca bezwzględną ścieżkę do wygenerowanego pliku.
         """
         exports_dir = "exports"
         os.makedirs(exports_dir, exist_ok=True)

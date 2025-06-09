@@ -22,6 +22,14 @@ from logic.habit_service import get_habits_by_user_id
 class DailyHabitEditor(tk.Toplevel):
     """
     Okno do dodawania lub edycji dziennego wpisu nawyku (HabitLog).
+    Konstruktor: Inicjalizuje GUI, pobiera listę nawyków i ewentualnie wypełnia pola
+    jeśli edytujemy istniejący wpis.
+
+    :param parent: rodzicielski widget (zwykle główne okno)
+    :param date: data wpisu (datetime)
+    :param user_id: ID zalogowanego użytkownika
+    :param refresh_callback: funkcja odświeżająca listę w MainScreen
+    :param habit_log_to_edit: obiekt HabitLog do edycji (opcjonalnie)
     """
 
     def __init__(
@@ -32,16 +40,6 @@ class DailyHabitEditor(tk.Toplevel):
         refresh_callback: Optional[Callable[[], None]] = None,
         habit_log_to_edit: Optional[HabitLog] = None,
     ) -> None:
-        """
-        Inicjalizuje GUI, pobiera listę nawyków i ewentualnie wypełnia pola
-        jeśli edytujemy istniejący wpis.
-
-        :param parent: rodzicielski widget (zwykle główne okno)
-        :param date: data wpisu (datetime)
-        :param user_id: ID zalogowanego użytkownika
-        :param refresh_callback: funkcja odświeżająca listę w MainScreen
-        :param habit_log_to_edit: obiekt HabitLog do edycji (opcjonalnie)
-        """
         super().__init__(parent)
         self.user_id = user_id
         self.date = date

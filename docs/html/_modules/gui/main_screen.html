@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+
+<html lang="pl" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>gui.main_screen &#8212; PPY_HabitsTracker 1 - dokumentacja</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=e81cd88c"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/translations.js?v=2827c288"></script>
+    <link rel="index" title="Indeks" href="../../genindex.html" />
+    <link rel="search" title="Szukaj" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Kod źródłowy modułu gui.main_screen</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">gui/main_screen.py</span>
+
+<span class="sd">Główny ekran aplikacji Habit Tracker – przeglądanie, dodawanie,</span>
+<span class="sd">edycja, usuwanie i oznaczanie dziennych wpisów nawyków oraz</span>
+<span class="sd">eksport statystyk i logów do PDF.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="kn">import</span> <span class="n">messagebox</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="kn">import</span> <span class="n">ttk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tkcalendar</span><span class="w"> </span><span class="kn">import</span> <span class="n">DateEntry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Session</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">date</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">HabitLog</span><span class="p">,</span> <span class="n">Habit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">db.session</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_engine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gui.daily_habit_editor</span><span class="w"> </span><span class="kn">import</span> <span class="n">DailyHabitEditor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gui.habits_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">HabitsManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gui.statistics_view</span><span class="w"> </span><span class="kn">import</span> <span class="n">StatisticsView</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.export_pdf</span><span class="w"> </span><span class="kn">import</span> <span class="n">PDFExporter</span>
+
+
+<div class="viewcode-block" id="MainScreen">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen">[dokumentacja]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MainScreen</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Główny ekran aplikacji Habit Tracker.</span>
+
+<span class="sd">    Pozwala użytkownikowi na:</span>
+<span class="sd">        - Przeglądanie historii logów nawyków w zadanym okresie</span>
+<span class="sd">        - Dodawanie, edycję i usuwanie dziennych wpisów</span>
+<span class="sd">        - Oznaczanie wpisów jako wykonane/niewykonane</span>
+<span class="sd">        - Zarządzanie listą nawyków (inny moduł)</span>
+<span class="sd">        - Przegląd statystyk</span>
+<span class="sd">        - Eksport wyników do PDF</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicjalizuje i pokazuje główne okno aplikacji.</span>
+
+<span class="sd">            :param user: Obiekt zalogowanego użytkownika</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habit_log_list</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected_habitLog</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HabitLog</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_out</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">user</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_date</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_date</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_date_var</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_date_var</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Główne okno</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Tk</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Habit Tracker - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="s2">&quot;1200x400&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="o">.</span><span class="n">rowconfigure</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="o">.</span><span class="n">columnconfigure</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Główne ramki</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_frame</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_frame</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">NSEW</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_frame</span><span class="o">.</span><span class="n">columnconfigure</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_frame</span><span class="o">.</span><span class="n">rowconfigure</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">habits_frame</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_frame</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ttk</span><span class="o">.</span><span class="n">Treeview</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_widgets</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_date_and_refresh</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_widgets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Tworzy wszystkie stałe widżety:</span>
+<span class="sd">        - Nagłówek i wybór zakresu dat</span>
+<span class="sd">        - Przyciski do dodawania/edycji/usuwania i oznaczania wpisów</span>
+<span class="sd">        - Przyciski ogólne: menadżer nawyków, statystyki, eksport PDF, wyloguj</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Nagłówek z powitaniem</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_frame</span><span class="p">)</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">NSEW</span><span class="p">,</span> <span class="n">columnspan</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Witaj, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Arial&quot;</span><span class="p">,</span> <span class="mi">16</span><span class="p">))</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">LEFT</span><span class="p">)</span>
+
+        <span class="c1"># Wybór daty</span>
+        <span class="n">date_frame</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+        <span class="n">date_frame</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">date_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Wskaż datę: &quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Arial&quot;</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">columnspan</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_date_var</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">from_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">.%m.%Y&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_date_var</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">to_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">.%m.%Y&quot;</span><span class="p">))</span>
+
+        <span class="c1"># Kontrolki zakresu dat</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">date_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Od:&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">from_date_entry</span> <span class="o">=</span> <span class="n">DateEntry</span><span class="p">(</span>
+            <span class="n">date_frame</span><span class="p">,</span>
+            <span class="n">date_pattern</span><span class="o">=</span><span class="s2">&quot;dd.mm.yyyy&quot;</span><span class="p">,</span>
+            <span class="n">textvariable</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">from_date_var</span>
+        <span class="p">)</span>
+        <span class="n">from_date_entry</span><span class="o">.</span><span class="n">set_date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_date</span><span class="p">)</span>
+        <span class="n">from_date_entry</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">E</span><span class="p">)</span>
+
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">date_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Do:&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">to_date_entry</span> <span class="o">=</span> <span class="n">DateEntry</span><span class="p">(</span>
+            <span class="n">date_frame</span><span class="p">,</span>
+            <span class="n">date_pattern</span><span class="o">=</span><span class="s2">&quot;dd.mm.yyyy&quot;</span><span class="p">,</span>
+            <span class="n">textvariable</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">to_date_var</span>
+        <span class="p">)</span>
+        <span class="n">to_date_entry</span><span class="o">.</span><span class="n">set_date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_date</span><span class="p">)</span>
+        <span class="n">to_date_entry</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">E</span><span class="p">)</span>
+
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span>
+            <span class="n">date_frame</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Odśwież&quot;</span><span class="p">,</span>
+            <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_set_date_and_refresh</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">NSEW</span><span class="p">,</span> <span class="n">columnspan</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Lista czynności - środek</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_habits</span><span class="p">()</span>
+
+        <span class="c1"># Przyciski dotyczące czynności - prawo</span>
+        <span class="n">right_button_frame</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_frame</span><span class="p">)</span>
+        <span class="n">right_button_frame</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">E</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">right_button_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Dodaj czynność&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">add_habit_for_day</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">NSEW</span><span class="p">)</span>
+
+        <span class="n">mark_habit_frame</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">LabelFrame</span><span class="p">(</span><span class="n">right_button_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Wybrana czynność:&quot;</span><span class="p">)</span>
+        <span class="n">mark_habit_frame</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">E</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">mark_habit_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Edytuj czynność&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">edit_habit_for_day</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">NSEW</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">mark_habit_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Usuń czynność&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">delete_habit_for_day</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">NSEW</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">mark_habit_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Wykonano&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mark_habit_as_done</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">NSEW</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">mark_habit_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Nie wykonano&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mark_habit_as_undone</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">NSEW</span><span class="p">)</span>
+
+        <span class="c1"># Przyciski ogólne - dół</span>
+        <span class="n">bottom_button_frame</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_frame</span><span class="p">)</span>
+        <span class="n">bottom_button_frame</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">columnspan</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">S</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">bottom_button_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Menadżer czynności&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">manage_habits</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">bottom_button_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Statystyki&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_stats</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">bottom_button_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Eksport do PDF&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">export_pdf</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">bottom_button_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Wyloguj&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logout</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_and_create_treeview</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Czyści ramkę z listą i tworzy nowy Treeview</span>
+<span class="sd">        dla prezentacji logów nawyków.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">widget</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits_frame</span><span class="o">.</span><span class="n">winfo_children</span><span class="p">():</span>
+            <span class="n">widget</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+        <span class="c1"># Utwórz nowy Treeview z możliwością sortowania po kliknięciu w nagłówek</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Treeview</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">habits_frame</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;details&quot;</span><span class="p">,</span> <span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="s2">&quot;completed_at&quot;</span><span class="p">,</span> <span class="s2">&quot;is_completed&quot;</span><span class="p">),</span>
+            <span class="n">show</span><span class="o">=</span><span class="s2">&quot;headings&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># definiujemy kolumny i przypisujemy każdemu nagłówkowi command</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;Nazwa&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="s2">&quot;Data&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;Opis&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;details&quot;</span><span class="p">,</span> <span class="s2">&quot;Szczegóły&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="s2">&quot;Czas trwania [min]&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;completed_at&quot;</span><span class="p">,</span> <span class="s2">&quot;Ukończono&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;is_completed&quot;</span><span class="p">,</span> <span class="s2">&quot;Wykonano&quot;</span><span class="p">),</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">title</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+            <span class="c1"># reverse=False oznacza sortowanie rosnące przy pierwszym kliknięciu</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span>
+                <span class="n">col</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                <span class="n">command</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_col</span><span class="o">=</span><span class="n">col</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_treeview</span><span class="p">(</span><span class="n">_col</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">BOTH</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habits_frame</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rowspan</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">NSEW</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;&lt;TreeviewSelect&gt;&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_row_selected</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MainScreen.sort_treeview">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.sort_treeview">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sort_treeview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sortuje widok po kolumnie `col`.</span>
+
+<span class="sd">        :param col: klucz kolumny (np. &quot;date&quot;, &quot;name&quot; itd.)</span>
+<span class="sd">        :param reverse: False – sortuj rosnąco, True – malejąco</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># pobierz wszystkie itemy i ich wartości w kolumnie col</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">iid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">get_children</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+            <span class="n">cell</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">iid</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+            <span class="c1"># dobieramy odpowiedni klucz sortowania</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="o">==</span> <span class="s2">&quot;duration&quot;</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span> <span class="k">if</span> <span class="n">cell</span> <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="k">elif</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="s2">&quot;completed_at&quot;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># spodziewamy się formatu &quot;dd.mm.YYYY&quot; lub &quot;dd.mm.YYYY HH:MM&quot;</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">.%m.%Y %H:%M&quot;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">key</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">.%m.%Y&quot;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="n">key</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">min</span>
+            <span class="k">elif</span> <span class="n">col</span> <span class="o">==</span> <span class="s2">&quot;is_completed&quot;</span><span class="p">:</span>
+                <span class="c1"># ✔️ &gt; ❌</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">cell</span> <span class="o">==</span> <span class="s2">&quot;✔️&quot;</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>  <span class="c1"># dla tekstów – ignorujemy wielkość liter</span>
+
+            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">iid</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+
+        <span class="c1"># sortujemy</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span>
+
+        <span class="c1"># przestawiamy wiersze w widoku</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">iid</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">iid</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+        <span class="c1"># po kliknięciu zmieniamy flagę reverse dla kolejnego sortowania</span>
+        <span class="c1"># podmieniamy handler nagłówka</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span>
+            <span class="n">col</span><span class="p">,</span>
+            <span class="n">command</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_col</span><span class="o">=</span><span class="n">col</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_treeview</span><span class="p">(</span><span class="n">_col</span><span class="p">,</span> <span class="ow">not</span> <span class="n">reverse</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.on_row_selected">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.on_row_selected">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_row_selected</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ustawia self.selected_habit_log na aktualnie wybrany wpis w Treeview.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">selected</span><span class="p">:</span>
+            <span class="n">habitLog_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">habitLog</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">habitLog</span> <span class="k">for</span> <span class="n">habit</span><span class="p">,</span> <span class="n">habitLog</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">habit_log_list</span> <span class="k">if</span> <span class="n">habitLog</span><span class="o">.</span><span class="n">habit_log_id</span> <span class="o">==</span> <span class="n">habitLog_id</span><span class="p">),</span>
+                <span class="kc">None</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">habitLog</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">selected_habitLog</span> <span class="o">=</span> <span class="n">habitLog</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_dates</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Konwertuje tekst yyy nawyki zmienne from_date_var/to_date_var</span>
+<span class="sd">        na obiekty date. W razie błędu pokazuje komunikat.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">from_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_date_var</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">.%m.%Y&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">to_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_date_var</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">.%m.%Y&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">&quot;Błąd formatu daty&quot;</span><span class="p">,</span> <span class="s2">&quot;Użyj formatu DD.MM.RRRR.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_date_and_refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parsuje zakres dat i odświeża listę logów z bazy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_dates</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_habits</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MainScreen.refresh_habits">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.refresh_habits">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refresh_habits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pobiera z bazy logi dla bieżącego użytkownika</span>
+<span class="sd">        w przedziale self.from_date – self.to_date i wyświetla je.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_dates</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_and_create_treeview</span><span class="p">()</span>
+
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">()</span>
+        <span class="n">from_date_for_query</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">min</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+        <span class="n">to_date_for_query</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">max</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+        <span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">habit_log_list</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Habit</span><span class="p">,</span> <span class="n">HabitLog</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">HabitLog</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Habit</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">HabitLog</span><span class="o">.</span><span class="n">date</span> <span class="o">&gt;=</span> <span class="n">from_date_for_query</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">HabitLog</span><span class="o">.</span><span class="n">date</span> <span class="o">&lt;=</span> <span class="n">to_date_for_query</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">habit_log_list</span><span class="p">:</span>
+            <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">habits_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Brak czynności. Dodaj pierwszą czynność!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">habit</span><span class="p">,</span> <span class="n">habitLog</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">habit_log_list</span><span class="p">:</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">habit</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">habitLog</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">.%m.%Y&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">habitLog</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="n">date</span><span class="p">))</span> <span class="k">else</span> <span class="n">habitLog</span><span class="o">.</span><span class="n">date</span><span class="p">,</span>
+                    <span class="n">habit</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                    <span class="n">habitLog</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                    <span class="n">habitLog</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span>
+                    <span class="n">habitLog</span><span class="o">.</span><span class="n">completed_at</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">.%m.%Y %H:%M&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">habitLog</span><span class="o">.</span><span class="n">completed_at</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">&quot;✔️&quot;</span> <span class="k">if</span> <span class="n">habitLog</span><span class="o">.</span><span class="n">completed_at</span> <span class="k">else</span> <span class="s2">&quot;❌&quot;</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">tk</span><span class="o">.</span><span class="n">END</span><span class="p">,</span> <span class="n">iid</span><span class="o">=</span><span class="n">habitLog</span><span class="o">.</span><span class="n">habit_log_id</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.add_habit_for_day">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.add_habit_for_day">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_habit_for_day</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Otwiera dialog DailyHabitEditor do dodania nowego logu na dzień self.from_date.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">DailyHabitEditor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_date</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span> <span class="n">refresh_callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_habits</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.edit_habit_for_day">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.edit_habit_for_day">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">edit_habit_for_day</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Otwiera dialog edycji dla self.selected_habit_log.</span>
+<span class="sd">        Jeśli nic nie zaznaczono – pokazuje ostrzeżenie.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">selection</span><span class="p">():</span>
+            <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">&quot;Edytor czynności&quot;</span><span class="p">,</span> <span class="s2">&quot;Brak wybranej czynności do edycji&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">DailyHabitEditor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selected_habitLog</span><span class="o">.</span><span class="n">date</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span>
+            <span class="n">refresh_callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_habits</span><span class="p">,</span>
+            <span class="n">habit_log_to_edit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_habitLog</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.delete_habit_for_day">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.delete_habit_for_day">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_habit_for_day</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Usuwa wybraną czynność i odświeża listę.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">selection</span><span class="p">():</span>
+            <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">&quot;Usuwanie&quot;</span><span class="p">,</span> <span class="s2">&quot;Brak wybranej czynności!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">habitLog</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_habitLog</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">habitLog</span><span class="p">)</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showinfo</span><span class="p">(</span><span class="s2">&quot;Usuwanie&quot;</span><span class="p">,</span> <span class="s2">&quot;Czynność z danego dnia została pomyślnie usunięta&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_habits</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.mark_habit_as_done">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.mark_habit_as_done">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mark_habit_as_done</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Oznacza czynność jako wykonaną i odświeża listę.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">selection</span><span class="p">():</span>
+            <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">&quot;Wykonano&quot;</span><span class="p">,</span> <span class="s2">&quot;Brak wybranej czynności!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">habitLog</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_habitLog</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">HabitLog</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">HabitLog</span><span class="o">.</span><span class="n">habit_log_id</span> <span class="o">==</span> <span class="n">habitLog</span><span class="o">.</span><span class="n">habit_log_id</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">HabitLog</span><span class="o">.</span><span class="n">completed_at</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)}</span>
+            <span class="p">)</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_habits</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.mark_habit_as_undone">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.mark_habit_as_undone">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mark_habit_as_undone</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Oznacza czynność jako niewykonaną i odświeża listę.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">habits_tree</span><span class="o">.</span><span class="n">selection</span><span class="p">():</span>
+            <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">&quot;Nie wykonano&quot;</span><span class="p">,</span> <span class="s2">&quot;Brak wybranej czynności!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">habitLog</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_habitLog</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">HabitLog</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">HabitLog</span><span class="o">.</span><span class="n">habit_log_id</span> <span class="o">==</span> <span class="n">habitLog</span><span class="o">.</span><span class="n">habit_log_id</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">HabitLog</span><span class="o">.</span><span class="n">completed_at</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+            <span class="p">)</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_habits</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.manage_habits">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.manage_habits">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">manage_habits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Otwiera osobne okno Menadżera nawyków (lista i edycja samych nawyków).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">HabitsManager</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.show_stats">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.show_stats">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">show_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Otwiera StatisticsView z wykresem/statystykami dla zadanych dat.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">StatisticsView</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">user_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_date</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_date</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.export_pdf">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.export_pdf">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Eksportuje statystyki i logi do dwóch plików PDF.</span>
+<span class="sd">        Wyświetla informację o ścieżkach lub błąd.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">exporter</span> <span class="o">=</span> <span class="n">PDFExporter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+            <span class="n">stats_path</span> <span class="o">=</span> <span class="n">exporter</span><span class="o">.</span><span class="n">export_stats_to_pdf</span><span class="p">()</span>
+            <span class="n">logs_path</span> <span class="o">=</span> <span class="n">exporter</span><span class="o">.</span><span class="n">export_habits_logs_to_pdf</span><span class="p">()</span>
+            <span class="n">messagebox</span><span class="o">.</span><span class="n">showinfo</span><span class="p">(</span>
+                <span class="s2">&quot;Eksport PDF&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;Pliki PDF zostały zapisane w:</span><span class="se">\n</span><span class="s2">1. </span><span class="si">{</span><span class="n">stats_path</span><span class="si">}</span><span class="se">\n</span><span class="s2">2. </span><span class="si">{</span><span class="n">logs_path</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">&quot;Eksport PDF&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Wystąpił błąd podczas eksportu danych do pliku PDF:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MainScreen.logout">
+<a class="viewcode-back" href="../../source/gui.html#gui.main_screen.MainScreen.logout">[dokumentacja]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">logout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Kończy sesję i zamyka główne okno (powrót do logowania).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_out</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">PPY_HabitsTracker</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Szukaj" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Nawigacja</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../source/main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/db.html">db namespace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/gui.html">gui namespace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/logic.html">logic namespace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/utils.html">utils namespace</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Kod modułu</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Konrad Plaska.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

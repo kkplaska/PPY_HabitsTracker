@@ -1,0 +1,23 @@
+logic namespace
+===============
+
+.. py:module:: logic
+
+Submodules
+----------
+
+logic.auth module
+-----------------
+
+.. automodule:: logic.auth
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+logic.habit\_service module
+---------------------------
+
+.. automodule:: logic.habit_service
+   :members:
+   :show-inheritance:
+   :undoc-members:
