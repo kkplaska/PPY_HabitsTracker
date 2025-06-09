@@ -10,23 +10,31 @@ class HabitEditor(tk.Toplevel):
     def __init__(self, parent, user_id, refresh_callback=None, habit_to_edit: Habit = None):
         super().__init__(parent)
         self.title("Habit Editor")
-        self.geometry("300x250")
+        self.geometry("360x120")
+        self.resizable(False, False)
         self.user_id = user_id
         self.refresh_callback = refresh_callback
         self.habit_to_edit = habit_to_edit
 
+        root = ttk.Frame(self, padding=20)
+        root.pack(expand=True, fill=tk.BOTH)
+
         # Pole: nazwa czynności
-        ttk.Label(self, text="Nazwa czynności:").pack(pady=5)
-        self.name_entry = ttk.Entry(self, width=30)
-        self.name_entry.pack()
+        ttk.Label(root, text="Nazwa czynności:").grid(row=0, column=0, sticky=tk.E, pady=(0, 5), padx=5)
+        self.name_entry = ttk.Entry(root, width=35)
+        self.name_entry.grid(row=0, column=1, sticky=tk.W, pady=(0, 5), padx=(0,5))
 
         # Pole: opis nawyku
-        ttk.Label(self, text="Opis:").pack(pady=5)
-        self.desc_entry = ttk.Entry(self, width=30)
-        self.desc_entry.pack()
+        ttk.Label(root, text="Opis:").grid(row=1, column=0, sticky=tk.E, pady=(0, 5), padx=5)
+        self.desc_entry = ttk.Entry(root, width=35)
+        self.desc_entry.grid(row=1, column=1, sticky=tk.W, pady=(0, 5), padx=(0,5))
+
+        def key_enter(event):
+            self.save_habit()
+        self.bind("<Return>", key_enter)
 
         # Przycisk zapisu
-        ttk.Button(self, text="Zapisz", command=self.save_habit).pack(pady=15)
+        ttk.Button(root, text="Zapisz", command=self.save_habit).grid(row=2, column=0, columnspan=2, pady=(5, 0))
 
         # Edycja czynności
         if self.habit_to_edit:

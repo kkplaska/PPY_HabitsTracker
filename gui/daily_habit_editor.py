@@ -59,6 +59,9 @@ class DailyHabitEditor(tk.Toplevel):
         self.completed_at_entry.grid(row=4, column=1, sticky="w", pady=5)
 
         # --- Przycisk zapisu ---
+        def key_enter(event):
+            self.save_habit_log()
+        self.bind("<Return>", key_enter)
         ttk.Button(self.dhe_frame, text="Zapisz", command=self.save_habit_log, takefocus=True).grid(row=5, column=0, columnspan=2, pady=15)
 
         # Edycja czynności

@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from sqlalchemy.orm import Session
 
-from db.models import Habit
+from db.models import Habit, HabitLog
 from db.session import get_engine
 from gui.habit_editor import HabitEditor
 
@@ -14,7 +14,6 @@ class HabitsManager(tk.Toplevel):
         self.user_id = user_id
         self.habits = None
         self.selected_habit = None
-        self.on_edit = lambda: HabitEditor(self, user_id=self.user_id, refresh_callback=self.load_table, habit_to_edit=self.selected_habit)  # funkcja wywoływana przy edycji
 
         # Tabela (Treeview)
         table_frame = ttk.Frame(self)
@@ -28,8 +27,8 @@ class HabitsManager(tk.Toplevel):
         button_frame = ttk.Frame(self)
         button_frame.pack(pady=10)
 
-        ttk.Button(button_frame, text="Dodaj czynność", command=lambda: HabitEditor(self, user_id=self.user_id, refresh_callback=self.load_table)).pack(side=tk.LEFT, padx=5, pady=5)
-        ttk.Button(button_frame, text="Edytuj czynność", command=self.on_edit).pack(side=tk.LEFT, padx=5, pady=5)
+        ttk.Button(button_frame, text="Dodaj czynność", command=self.add_habit).pack(side=tk.LEFT, padx=5, pady=5)
+        ttk.Button(button_frame, text="Edytuj czynność", command=self.edit_selected_habit).pack(side=tk.LEFT, padx=5, pady=5)
         ttk.Button(button_frame, text="Usuń czynność", command=self.delete_habit).pack(side=tk.LEFT, padx=5, pady=5)
 
         self.load_table()
@@ -44,6 +43,15 @@ class HabitsManager(tk.Toplevel):
             habit = next((h for h in self.habits if h.habit_id == habit_id), None)
             if habit:
                 self.selected_habit = habit
+
+    def add_habit(self):
+        HabitEditor(self, user_id=self.user_id, refresh_callback=self.load_table)
+
+    def edit_selected_habit(self):
+        if not self.selected_habit:
+            messagebox.showerror("Błąd", "Nie został wybrany nawyk do edycji!")
+            return
+        HabitEditor(self, user_id=self.user_id, refresh_callback=self.load_table, habit_to_edit=self.selected_habit)
 
     def load_habits(self):
         engine = get_engine()
@@ -63,8 +71,11 @@ class HabitsManager(tk.Toplevel):
 
     def delete_habit(self):
         habit = self.selected_habit
-        engine = get_engine()
-        with Session(engine) as session:
-            session.delete(habit)
-            session.commit()
-        self.load_table()
+        confirm_box = messagebox.askyesno(title="Usuwanie nawyku", message=f"Czy na pewno chcesz usunąć {habit.name}?")
+        if confirm_box:
+            engine = get_engine()
+            with Session(engine) as session:
+                session.query(HabitLog).filter_by(habit_id=habit.habit_id).delete()
+                session.delete(habit)
+                session.commit()
+            self.load_table()

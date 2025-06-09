@@ -11,7 +11,7 @@ class PDFExporter:
         self.font_path = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
 
     def export_stats_to_pdf(self):
-        filename = f"{datetime.today().strftime('%Y-%m-%d')}_{self.user.username}_habits_statistics.pdf"
+        filename = f"exports/{datetime.today().strftime('%Y-%m-%d')}_{self.user.username}_habits_statistics.pdf"
         habits = get_habits_by_user_id(self.user.user_id)
         habit_logs = get_habits_logs_by_user_id(self.user.user_id)
         created_dates = [h.created_at for h in habits if h.created_at]
@@ -113,7 +113,7 @@ class PDFExporter:
                 pdf.ln()
 
     def export_habits_logs_to_pdf(self):
-        filename = f"{datetime.today().strftime('%Y-%m-%d')}_{self.user.username}_habits_logs.pdf"
+        filename = f"exports/{datetime.today().strftime('%Y-%m-%d')}_{self.user.username}_habits_logs.pdf"
         engine = get_engine()
         with Session(engine) as session:
             habits = session.query(Habit).filter_by(user_id=self.user.user_id).order_by(Habit.created_at.desc()).all()

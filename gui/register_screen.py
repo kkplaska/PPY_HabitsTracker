@@ -27,27 +27,35 @@ class RegisterScreen:
     def __init__(self):
         window = tk.Tk()
         window.title("Habit Tracker - Rejestracja")
-        window.geometry("400x350")
+        window.geometry("375x150")
+        window.resizable(False, False)
 
-        ttk.Label(window, text="Nazwa użytkownika:").pack(pady=(30, 5))
-        user_entry = ttk.Entry(window)
-        user_entry.pack(pady=5)
+        root = ttk.Frame(window, padding=20)
+        root.pack(expand=True, fill=tk.BOTH)
 
-        ttk.Label(window, text="Hasło:").pack(pady=5)
-        password_entry = ttk.Entry(window, show="*")
-        password_entry.pack(pady=5)
+        ttk.Label(root, text="Nazwa użytkownika:").grid(row=0, column=0, sticky=tk.E, pady=(0, 5), padx=5)
+        user_entry = ttk.Entry(root, width=35)
+        user_entry.grid(row=0, column=1, sticky=tk.W, pady=(0, 5), padx=(0,5))
 
-        ttk.Label(window, text="Powtórz hasło:").pack(pady=5)
-        re_password_entry = ttk.Entry(window, show="*")
-        re_password_entry.pack(pady=5)
+        ttk.Label(root, text="Hasło:").grid(row=1, column=0, sticky=tk.E, pady=(0, 5), padx=5)
+        password_entry = ttk.Entry(root, show="*")
+        password_entry.grid(row=1, column=1, sticky=tk.W, pady=(0, 5), padx=(0,5))
+
+        ttk.Label(root, text="Powtórz hasło:").grid(row=2, column=0, sticky=tk.E, pady=(0, 5), padx=5)
+        re_password_entry = ttk.Entry(root, show="*")
+        re_password_entry.grid(row=2, column=1, sticky=tk.W, pady=(0, 5), padx=(0,5))
+
+        def key_enter(event):
+            attempt_register(user_entry.get(), password_entry.get(), re_password_entry.get(), window)
+        window.bind("<Return>", key_enter)
 
         ttk.Button(
-            window,
+            root,
             text="Zarejestruj",
             command=lambda: attempt_register(
                 user_entry.get(), password_entry.get(), re_password_entry.get(), window
             )
-        ).pack(pady=20)
+        ).grid(row=4, column=0, columnspan=2, pady=(5, 0))
 
         window.mainloop()
 
